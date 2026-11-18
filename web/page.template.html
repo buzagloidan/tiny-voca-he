@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tiny-voca עברית</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Frank+Ruhl+Libre:wght@500;700&family=Noto+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef1ef; --surface: #f9fbfa; --raised: #ffffff; --ink: #18211f; --muted: #58655f; --faint: #8a9690;
+  --line: #d3dbd7; --accent: #0d5956; --accent-ink: #ffffff; --accent-soft: #d6e8e4; --wave: #9fb4ae; --warn: #8a4b12;
+  --mark: #cfe6e0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111615; --surface: #171e1c; --raised: #1d2523; --ink: #e2eae7; --muted: #9daaa5; --faint: #6d7a75;
+    --line: #2a3431; --accent: #5cb8ad; --accent-ink: #0b1513; --accent-soft: #1d3633; --wave: #3e504b; --warn: #e2a36a;
+    --mark: #22423d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111615; --surface: #171e1c; --raised: #1d2523; --ink: #e2eae7; --muted: #9daaa5; --faint: #6d7a75;
+  --line: #2a3431; --accent: #5cb8ad; --accent-ink: #0b1513; --accent-soft: #1d3633; --wave: #3e504b; --warn: #e2a36a;
+  --mark: #22423d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.6 "Assistant", system-ui, sans-serif; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 40px 16px 56px; }
+header h1 { font: 700 clamp(34px, 7vw, 52px)/1.05 "Frank Ruhl Libre", serif; margin: 0 0 10px; letter-spacing: -0.01em; }
+header h1 .latin { direction: ltr; unicode-bidi: isolate; }
+header p { margin: 0; color: var(--muted); font-size: 18px; max-width: 58ch; }
+.status { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: 14px; color: var(--muted); min-height: 22px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+.status.ready .dot { background: var(--accent); }
+.status.error { color: var(--warn); } .status.error .dot { background: var(--warn); }
+.bar { flex: 1; max-width: 220px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+.status.ready .bar, .status.error .bar { display: none; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-top: 26px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 15px "Assistant", sans-serif; border: 1px solid var(--line); background: var(--raised); color: var(--ink);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.text { font: 500 clamp(20px, 3.4vw, 25px)/1.75 "Frank Ruhl Libre", serif; margin: 20px 0 6px; min-height: 3.5em; }
+.text span { border-radius: 3px; transition: background .2s, box-shadow .2s; }
+.text span.on { background: var(--mark); box-shadow: 0 0 0 3px var(--mark); }
+
+.controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+.control label { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); font-weight: 600; }
+.control output { font-family: "Noto Sans Mono", monospace; color: var(--ink); font-weight: 500; direction: ltr; unicode-bidi: isolate; }
+input[type=range] { width: 100%; accent-color: var(--accent); margin: 8px 0 0; }
+
+.play { display: flex; align-items: center; gap: 16px; margin-top: 22px; }
+.speak { font: 700 18px "Assistant", sans-serif; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
+  padding: 11px 26px; cursor: pointer; min-width: 120px; display: inline-flex; align-items: center; gap: 10px; justify-content: center; }
+.speak:disabled { opacity: .45; cursor: default; }
+.speak svg { width: 16px; height: 16px; fill: currentColor; }
+.wave { flex: 1; min-width: 0; height: 56px; display: block; }
+.numbers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.numbers div { font-size: 13px; color: var(--muted); }
+.numbers b { display: block; font: 500 18px "Noto Sans Mono", monospace; color: var(--ink); direction: ltr; text-align: right; unicode-bidi: plaintext; }
+
+details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+summary { cursor: pointer; font-weight: 700; font-size: 15px; }
+summary span { font-weight: 400; color: var(--muted); }
+details p { color: var(--muted); font-size: 14px; margin: 8px 0; }
+textarea { width: 100%; min-height: 150px; direction: ltr; text-align: left; font: 14px/1.7 "Noto Sans Mono", monospace; color: var(--ink);
+  background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; resize: vertical; }
+textarea:focus, .chip:focus-visible, .speak:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.phonestat { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.phonestat .warn { color: var(--warn); }
+.link { background: none; border: 0; color: var(--accent); font: 600 13px "Assistant", sans-serif; cursor: pointer; padding: 0; }
+
+h2 { font: 700 24px "Frank Ruhl Libre", serif; margin: 44px 0 14px; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.facts div { background: var(--surface); padding: 14px 16px; }
+.facts b { display: block; font: 500 22px "Noto Sans Mono", monospace; direction: ltr; text-align: right; unicode-bidi: plaintext; }
+.facts span { font-size: 14px; color: var(--muted); }
+.prose { color: var(--muted); max-width: 64ch; }
+.prose strong { color: var(--ink); }
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+footer p { margin: 4px 0; }
+a { color: var(--accent); }
+bdi, .ltr { direction: ltr; unicode-bidi: isolate; }
+
+@media (max-width: 640px) {
+  .wrap { padding-top: 28px; }
+  .card { padding: 16px; }
+  .controls { grid-template-columns: 1fr; gap: 12px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .play { flex-wrap: wrap; } .wave { flex-basis: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="latin">tiny-voca</span> עברית</h1>
+    <p>מודל דיבור עברי זעיר, 4.5 מיליון פרמטרים, שרץ כולו בתוך הדפדפן שלך. שום דבר לא נשלח לשרת.</p>
+    <div class="status" id="status" role="status"><span class="dot"></span><span id="statusText">טוען את המודל…</span><span class="bar"><i id="barFill"></i></span></div>
+  </header>
+
+  <section class="card" aria-label="הדגמה">
+    <div class="chips" id="chips" role="group" aria-label="דוגמאות"></div>
+    <div class="text" id="text" aria-live="polite"></div>
+
+    <div class="controls">
+      <div class="control"><label for="speed">מהירות <output id="speedOut">1.00×</output></label>
+        <input type="range" id="speed" min="0.6" max="1.6" step="0.05" value="1"></div>
+      <div class="control"><label for="pitch">גובה הקול <output id="pitchOut">0</output></label>
+        <input type="range" id="pitch" min="-6" max="6" step="1" value="0"></div>
+      <div class="control"><label for="range">טווח אינטונציה <output id="rangeOut">1.00×</output></label>
+        <input type="range" id="range" min="0.5" max="1.6" step="0.05" value="1"></div>
+    </div>
+
+    <div class="play">
+      <button class="speak" id="speak" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path id="speakIcon" d="M12 2v12L3 8z"/></svg><span id="speakLabel">השמעה</span></button>
+      <canvas class="wave" id="wave" aria-hidden="true"></canvas>
+    </div>
+    <div class="numbers">
+      <div>זמן יצירה<b id="genTime">—</b></div>
+      <div>אורך השמע<b id="audioTime">—</b></div>
+      <div>מהיר מזמן אמת<b id="rtf">—</b></div>
+    </div>
+
+    <details id="phonesBox">
+      <summary>הפונמות שהמודל קורא <span>· עריכה</span></summary>
+      <p>המודל לא קורא אותיות. הוא מקבל תעתיק פונטי (IPA). שורה לכל משפט, והסימן ˈ לפני תנועה מסמן את ההטעמה. אפשר לשנות כאן ולשמוע את ההבדל.</p>
+      <textarea id="phones" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="פונמות, שורה לכל משפט"></textarea>
+      <div class="phonestat"><span id="phoneStat"></span><button class="link" id="resetPhones" type="button">חזרה למקור</button></div>
+    </details>
+  </section>
+
+  <h2>על המודל</h2>
+  <div class="facts">
+    <div><b>4,531,147</b><span>פרמטרים</span></div>
+    <div><b>21 MB</b><span>קובץ ONNX</span></div>
+    <div><b>24 kHz</b><span>קצב דגימה</span></div>
+    <div><b>1</b><span>קול</span></div>
+    <div><b>~9 h</b><span>דיבור לאימון</span></div>
+    <div><b>104,000</b><span>צעדי אימון</span></div>
+  </div>
+
+  <h2>למה אי אפשר להקליד טקסט חופשי?</h2>
+  <p class="prose">עברית נכתבת בלי ניקוד, ולכן לפני ההקראה צריך לנחש איך כל מילה נהגית. את זה עושה <bdi>RenikudPlus</bdi>, מודל שהופך טקסט עברי לתעתיק פונטי, וגודלו <strong>312 MB</strong>, פי 15 מהמודל עצמו. כדי שהדף יישאר קל, הדוגמאות תועתקו מראש. ההקראה עצמה, מהפונמות ועד גל הקול, קורית כאן בדפדפן.</p>
+
+  <footer>
+    <p><strong>נתוני האימון:</strong> הקלטות מתוך <a href="https://huggingface.co/datasets/ivrit-ai/crowd-recital" target="_blank" rel="noopener">crowd-recital</a> של <a href="https://www.ivrit.ai" target="_blank" rel="noopener">ivrit.ai</a>, ברישיון <bdi>ivrit.ai License v2</bdi> (<bdi>CC BY 4.0</bdi> לאימון מודלים). ההקלטות הומרו לקול אחד בעזרת <bdi>kNN-VC</bdi>, כך שהמודל לא מדבר בקולם של המקריאים. תודה ל-ivrit.ai.</p>
+    <p>מבוסס על <a href="https://tiny-voca.n4ze3m.com/" target="_blank" rel="noopener">tiny-voca</a> (<bdi>Apache-2.0</bdi>). תעתיק פונטי עם <bdi>RenikudPlus</bdi> (<bdi>Apache-2.0</bdi>). הרצה בדפדפן עם <bdi>ONNX Runtime Web</bdi>.</p>
+    <p>הקטע בדוגמת „ויקיפדיה” מתוך הערך <a href="https://he.wikipedia.org/wiki/%D7%99%D7%A2%D7%A7%D7%91_%D7%90%D7%97%D7%99%D7%9E%D7%90%D7%99%D7%A8" target="_blank" rel="noopener">יעקב אחימאיר</a> בוויקיפדיה העברית, ברישיון <bdi>CC BY-SA 4.0</bdi>, בעריכה קלה.</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.wasm.min.js"></script>
+<script>
+/*TOKENIZE*/
+</script>
+<script>
+const PRESETS = /*PRESETS*/;
+const ORT_DIST = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
+// The model ships as two base64 text files (artifacts serve no raw binary type).
+const FILES = [["ort-wasm-simd-threaded.wasm", 11246032], ["model-1.b64.txt", 14241156], ["model-2.b64.txt", 14241156]];
+const RATE = 24000, SEMITONE = Math.log(2) / 12, TRAINED_TOKENS = 217, MAX_TOKENS = 510;
+const $ = (id) => document.getElementById(id);
+
+let session = null, current = PRESETS[0], ctx = null, run = 0, timeline = [], sources = [], startAt = 0, endAt = 0, finished = true;
+
+// ---------- loading ----------
+function setStatus(text, kind) {
+  $("statusText").textContent = text;
+  $("status").className = "status" + (kind ? " " + kind : "");
+}
+async function fetchBytes(url, size, tick) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+  const reader = response.body.getReader(), out = new Uint8Array(size);
+  let offset = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (offset + value.length > out.length) throw new Error(`${url}: unexpected size`);
+    out.set(value, offset); offset += value.length; tick(value.length);
+  }
+  return offset === size ? out : out.slice(0, offset);
+}
+function fromBase64(bytes) {
+  const text = new TextDecoder().decode(bytes).replace(/\s+/g, "");
+  if (Uint8Array.fromBase64) return Uint8Array.fromBase64(text);
+  const raw = atob(text), out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+async function loadModel() {
+  const total = FILES.reduce((n, [, size]) => n + size, 0);
+  let got = 0;
+  const tick = (n) => {
+    got += n;
+    $("barFill").style.width = (100 * got / total).toFixed(1) + "%";
+    setStatus(`טוען את המודל… ${(got / 1e6).toFixed(0)} / ${(total / 1e6).toFixed(0)} MB`);
+  };
+  try {
+    const [wasm, ...parts] = await Promise.all(FILES.map(([url, size]) => fetchBytes(url, size, tick)));
+    const [a, b] = parts.map(fromBase64);
+    const model = new Uint8Array(a.length + b.length);
+    model.set(a); model.set(b, a.length);
+    ort.env.wasm.numThreads = 1;
+    ort.env.wasm.wasmPaths = ORT_DIST;
+    ort.env.wasm.wasmBinary = wasm;
+    setStatus("מכין את המודל…");
+    session = await ort.InferenceSession.create(model, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+    setStatus("המודל מוכן. בחרו דוגמה ולחצו השמעה.", "ready");
+    $("speak").disabled = false;
+  } catch (error) {
+    console.error(error);
+    setStatus("לא הצלחתי לטעון את המודל: " + error.message, "error");
+  }
+}
+
+// ---------- text and phonemes ----------
+function renderPreset(preset) {
+  current = preset;
+  for (const chip of $("chips").children) chip.setAttribute("aria-pressed", String(chip.dataset.key === preset.key));
+  const text = $("text");
+  text.replaceChildren(...preset.sentences.flatMap((s, i) => {
+    const span = document.createElement("span");
+    span.textContent = s.text; span.dataset.index = i;
+    return i ? [document.createTextNode(" "), span] : [span];
+  }));
+  $("phones").value = preset.sentences.map((s) => s.ipa).join("\n");
+  checkPhones();
+}
+function lines() {
+  return $("phones").value.split("\n").map((line, index) => ({ index, line: line.trim() }))
+    .filter((l) => l.line).map((l) => ({ ...l, ...tokenizeIpa(l.line) })).filter((l) => l.speakable);
+}
+function checkPhones() {
+  const all = lines(), edited = $("phones").value !== current.sentences.map((s) => s.ipa).join("\n");
+  const longest = all.reduce((n, l) => Math.max(n, l.ids.length), 0);
+  const unknown = [...new Set(all.flatMap((l) => l.unknown))];
+  const stat = $("phoneStat");
+  const parts = [`${all.length} משפטים`, `הארוך ביותר ${longest} טוקנים`];
+  let warn = "";
+  if (unknown.length) warn = `סימנים לא מוכרים: ${unknown.join(" ")}`;
+  else if (longest > MAX_TOKENS) warn = `שורה ארוכה מדי (מעל ${MAX_TOKENS} טוקנים)`;
+  else if (longest > TRAINED_TOKENS) warn = `מעל ${TRAINED_TOKENS} טוקנים המודל לא אומן, והקול עלול להשתבש. כדאי לפצל לשורות.`;
+  stat.replaceChildren(document.createTextNode(parts.join(" · ") + (edited ? " · נערך" : "")));
+  if (warn) { const w = document.createElement("span"); w.className = "warn"; w.textContent = " · " + warn; stat.append(w); }
+  $("resetPhones").hidden = !edited;
+}
+
+// ---------- synthesis ----------
+async function synth(line, settings) {
+  const n = line.ids.length;
+  const feeds = {
+    tokens: new ort.Tensor("int64", BigInt64Array.from(line.ids, (x) => BigInt(x)), [1, n]),
+    stress: new ort.Tensor("int64", BigInt64Array.from(line.stress, (x) => BigInt(x)), [1, n]),
+    voice: new ort.Tensor("int64", BigInt64Array.from([0n]), [1]),
+    speed: new ort.Tensor("float32", Float32Array.from([settings.speed]), [1]),
+    pitch_shift: new ort.Tensor("float32", Float32Array.from([settings.pitch * SEMITONE]), [1]),
+    pitch_range: new ort.Tensor("float32", Float32Array.from([settings.range]), [1]),
+  };
+  const out = await session.run(feeds);
+  const audio = Float32Array.from(out.audio.data);
+  let peak = 0;
+  for (const v of audio) peak = Math.max(peak, Math.abs(v));
+  if (peak > 0.99) for (let i = 0; i < audio.length; i++) audio[i] *= 0.99 / peak;
+  return audio;
+}
+function settings() {
+  return { speed: +$("speed").value, pitch: +$("pitch").value, range: +$("range").value };
+}
+function stop() {
+  run++;
+  for (const s of sources) { try { s.stop(); } catch {} }
+  sources = []; finished = true; setPlaying(false); highlight(-1);
+}
+async function speak() {
+  const todo = lines().filter((l) => l.ids.length <= MAX_TOKENS + 2);
+  if (!session || !todo.length) return;
+  ctx ||= new AudioContext({ sampleRate: RATE });
+  await ctx.resume();
+  stop();
+  const id = ++run, opts = settings();
+  timeline = []; endAt = 0; finished = false; setPlaying(true);
+  startAt = ctx.currentTime + 0.12;
+  let cursor = startAt, gen = 0, said = 0;
+  for (const line of todo) {
+    const t0 = performance.now();
+    let audio;
+    try { audio = await synth(line, opts); }
+    catch (error) { console.error(error); setStatus("שגיאה בהקראה: " + error.message, "error"); break; }
+    if (id !== run) return;
+    gen += (performance.now() - t0) / 1000;
+    const buffer = ctx.createBuffer(1, audio.length, RATE);
+    buffer.copyToChannel(audio, 0);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer; source.connect(ctx.destination);
+    cursor = Math.max(cursor, ctx.currentTime + 0.03);
+    source.start(cursor); sources.push(source);
+    timeline.push({ start: cursor - startAt, duration: buffer.duration, index: line.index, peaks: peaksOf(audio) });
+    cursor += buffer.duration; said += buffer.duration;
+    $("genTime").textContent = gen.toFixed(2) + " s";
+    $("audioTime").textContent = said.toFixed(1) + " s";
+    $("rtf").textContent = (said / Math.max(gen, 1e-3)).toFixed(0) + "×";
+    await new Promise((r) => setTimeout(r));
+  }
+  if (id === run) endAt = cursor - startAt;
+}
+function setPlaying(on) {
+  $("speakLabel").textContent = on ? "עצירה" : "השמעה";
+  $("speakIcon").setAttribute("d", on ? "M3 3h10v10H3z" : "M12 2v12L3 8z");
+}
+
+// ---------- waveform, playhead and highlight ----------
+function peaksOf(audio) {
+  const step = 240, out = new Float32Array(Math.ceil(audio.length / step));
+  for (let i = 0; i < out.length; i++) {
+    let m = 0;
+    for (let j = i * step, e = Math.min(audio.length, j + step); j < e; j++) m = Math.max(m, Math.abs(audio[j]));
+    out[i] = m;
+  }
+  return out;
+}
+function highlight(lineIndex) {
+  for (const span of $("text").children) span.classList.toggle("on", +span.dataset.index === lineIndex);
+}
+function draw() {
+  const canvas = $("wave"), dpr = window.devicePixelRatio || 1;
+  const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const g = canvas.getContext("2d"), css = getComputedStyle(document.documentElement);
+  g.clearRect(0, 0, w, h);
+  const last = timeline.at(-1);
+  const total = last ? last.start + last.duration : 0;
+  const now = ctx && !finished ? ctx.currentTime - startAt : -1;
+  if (!total) {
+    g.fillStyle = css.getPropertyValue("--line"); g.fillRect(0, h / 2 - dpr / 2, w, dpr);
+  } else {
+    // Time runs right to left, like the text.
+    const bar = 3 * dpr, gap = 2 * dpr, count = Math.floor(w / (bar + gap));
+    const played = css.getPropertyValue("--accent"), rest = css.getPropertyValue("--wave");
+    for (let k = 0; k < count; k++) {
+      const t0 = (k / count) * total, t1 = ((k + 1) / count) * total;
+      let m = 0;
+      for (const seg of timeline) {
+        if (seg.start > t1 || seg.start + seg.duration < t0) continue;
+        const a = Math.max(0, Math.floor((t0 - seg.start) * 100)), b = Math.min(seg.peaks.length, Math.ceil((t1 - seg.start) * 100));
+        for (let i = a; i < b; i++) m = Math.max(m, seg.peaks[i]);
+      }
+      const bh = Math.max(dpr, Math.min(1, m * 1.6) * h * 0.9);
+      g.fillStyle = now >= t0 ? played : rest;
+      g.fillRect(w - (k + 1) * (bar + gap), (h - bh) / 2, bar, bh);
+    }
+  }
+  if (!finished && ctx) {
+    const seg = timeline.find((s) => now >= s.start && now < s.start + s.duration);
+    highlight(seg ? seg.index : -1);
+    if (endAt && now > endAt + 0.05) { finished = true; sources = []; setPlaying(false); highlight(-1); }
+  }
+  requestAnimationFrame(draw);
+}
+
+// ---------- wiring ----------
+for (const preset of PRESETS) {
+  const chip = document.createElement("button");
+  chip.className = "chip"; chip.type = "button"; chip.textContent = preset.label; chip.dataset.key = preset.key;
+  chip.addEventListener("click", () => { stop(); timeline = []; endAt = 0; renderPreset(preset); });
+  $("chips").append(chip);
+}
+$("speak").addEventListener("click", () => (finished ? speak() : stop()));
+$("phones").addEventListener("input", checkPhones);
+$("resetPhones").addEventListener("click", () => renderPreset(current));
+for (const [id, fmt] of [["speed", (v) => (+v).toFixed(2) + "×"], ["pitch", (v) => (v > 0 ? "+" : "") + v], ["range", (v) => (+v).toFixed(2) + "×"]]) {
+  const update = () => ($(id + "Out").textContent = fmt($(id).value));
+  $(id).addEventListener("input", update); update();
+}
+renderPreset(PRESETS[0]);
+requestAnimationFrame(draw);
+loadModel();
+</script>
+</body>
+</html>

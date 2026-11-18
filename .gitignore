@@ -1,0 +1,22 @@
+.venv/
+work/
+runs/
+__pycache__/
+*.egg-info/
+build/
+dist/
+.DS_Store
+# Built by web/build_model_parts.py from models/he-v3/tiny-voca-he.onnx
+web/*.b64.txt
+web/*.wasm
+web/tiny-voca-he.onnx
+web/tiny-voca-he.json
+# Data made by recipes/recital-v3 (never commit audio)
+recipes/recital-v3/crowd-recital/
+recipes/recital-v3/target-voice/
+recipes/recital-v3/work/
+recipes/recital-v3/dataset/
+recipes/recital-v3/sessions.json
+*.wav
+*.flac
+*.mka
